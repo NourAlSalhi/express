@@ -1,75 +1,46 @@
 import express from "express";
 import morgan from "morgan";
-import students from "./data/mock.json" assert { type: "json" };
 import path from "path";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import studentRoutes from "./routes/studentRoutes.js";
+
 const app = express();
 const PORT = 3000;
-
-app.use(express.json());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-//Using the public folder at the root of the project
+// Middleware
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(morgan("dev", { skip: (req) => req.url.startsWith("/static") }));
 
-//Using the images folder at the root/images
-// app.use("/images", express.static("images"));
-
-//use morgan to logger
-app.use(morgan('dev', {
-  skip: (req) => req.url.startsWith('/static')
-}));
-
+// Auth middleware for POST
 app.use((req, res, next) => {
   if (req.method === "POST") {
     const token = req.headers["authorization"];
     if (!token || token !== "Bearer mysecrettoken") {
-      return res
-        .status(403)
-        .json({ error: "Forbidden: Invalid or missing token" });
+      return res.status(403).json({ error: "Forbidden: Invalid or missing token" });
     }
   }
   next();
 });
 
-app.post("/posts", (req, res) => {
-  const { title, content } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ error: "Missing title or content" });
-  }
-  const post = { id: 1, title, content };
-  res.status(201).json({ message: "Post created", post });
-});
+// Routes
+app.use("/", studentRoutes);
 
-
-app.get("/", (req, res) => {
-  res.json(students);
-});
-
-app.get("/student/:id", (req, res) => {
-  const studentId = Number(req.params.id);
-  const student = students.find((user) => user.id === parseInt(studentId));
-  if (!student) {
-    return res.status(404).send("Student not found");
-  }
-  res.send(student);
-});
-
-// 404 Handler (runs if no previous middleware handled the request)
+// 404 handler
 app.use((req, res) => {
-  res.status(404).send('Page Not Found');
+  res.status(404).send("Page Not Found");
 });
 
-// Error-handling middleware 
+// Error-handling middleware
 app.use((err, req, res, next) => {
   console.error(`[ERROR] ${req.method} ${req.url} — ${err.stack}`);
-  res.status(500).send('Something broke!');
+  res.status(500).send("Something broke!");
 });
 
-
 app.listen(PORT, () => {
-  console.log("Server is running on port 3000");
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
