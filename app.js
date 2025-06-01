@@ -1,52 +1,71 @@
 import express from "express";
-import data from "./data/mock.json" assert { type: "json" };
-
+import students from "./data/mock.json" assert { type: "json" };
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 const app = express();
 const PORT = 3000;
 
+app.use(express.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 //Using the public folder at the root of the project
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 //Using the images folder at the root/images
-app.use("/images", express.static("images"));
+// app.use("/images", express.static("images"));
 
-app.get("/", (req, res) => {
-  res.json(data);
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
 });
 
-app.get("/class/:id", (req, res) => {
+app.use((req, res, next) => {
+  if (req.method === "POST") {
+    const token = req.headers["authorization"];
+    if (!token || token !== "Bearer mysecrettoken") {
+      return res
+        .status(403)
+        .json({ error: "Forbidden: Invalid or missing token" });
+    }
+  }
+  next();
+});
+
+app.post("/posts", (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: "Missing title or content" });
+  }
+  const post = { id: 1, title, content };
+  res.status(201).json({ message: "Post created", post });
+});
+
+
+app.get("/", (req, res) => {
+  res.json(students);
+});
+
+app.get("/student/:id", (req, res) => {
   const studentId = Number(req.params.id);
-  const student = data.filter((student) => student.id === studentId);
+  const student = students.find((user) => user.id === parseInt(studentId));
+  if (!student) {
+    return res.status(404).send("Student not found");
+  }
   res.send(student);
 });
 
-app.get("/redirect", (req, res) => {
-  res.redirect("https://www.google.com");
+// 404 Handler (runs if no previous middleware handled the request)
+app.use((req, res) => {
+  res.status(404).send('Page Not Found');
 });
 
-app.route("/class").get((req, res) => {
-  res.send("This is a Get Reauest at /class");
-})
-.post((req, res) => {
-  res.send("This is a Post Reauest at /class");
-})
-.put((req, res) => {
-  res.send("This is a Put Reauest at /class");
-})
-.delete((req, res) => {
-  res.send("This is a Delete Reauest at /class");
-})
-
-app.post("/create", (req, res) => {
-  res.send("This is a Post Reauest at /create");
-});
-
-app.put("/edit", (req, res) => {
-  res.send("This is a Edit Reauest at /edit");
-});
-
-app.delete("/delete", (req, res) => {
-  res.send("This is a Delete Reauest at /delete");
+// Error Handler Middleware
+app.use((err, req, res, next) => {
+  console.error('🔥 Unexpected Error:', err.stack);
+  res.status(500).send('Something broke!');
 });
 
 app.listen(PORT, () => {
