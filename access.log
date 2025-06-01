@@ -1,0 +1,2 @@
+::1 - - [01/Jun/2025:12:25:28 +0000] "POST /posts HTTP/1.1" 201 87 "-" "PostmanRuntime/7.44.0"
+::1 - - [01/Jun/2025:12:25:34 +0000] "POST /posts HTTP/1.1" 201 87 "-" "PostmanRuntime/7.44.0"

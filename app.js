@@ -1,4 +1,5 @@
 import express from "express";
+import morgan from "morgan";
 import students from "./data/mock.json" assert { type: "json" };
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -14,13 +15,23 @@ const __dirname = dirname(__filename);
 //Using the public folder at the root of the project
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(morgan('dev', {
+  skip: (req) => req.url.startsWith('/static')
+}));
+
+
 //Using the images folder at the root/images
 // app.use("/images", express.static("images"));
 
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
+// custom logger (middelware)
+// app.use((req, res, next) => {
+//   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+//   next();
+// });
+
+//use morgan
+app.use(morgan("short"));
+
 
 app.use((req, res, next) => {
   if (req.method === "POST") {
