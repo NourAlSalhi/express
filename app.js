@@ -15,23 +15,13 @@ const __dirname = dirname(__filename);
 //Using the public folder at the root of the project
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(morgan('dev', {
-  skip: (req) => req.url.startsWith('/static')
-}));
-
-
 //Using the images folder at the root/images
 // app.use("/images", express.static("images"));
 
-// custom logger (middelware)
-// app.use((req, res, next) => {
-//   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-//   next();
-// });
-
-//use morgan
-app.use(morgan("short"));
-
+//use morgan to logger
+app.use(morgan('dev', {
+  skip: (req) => req.url.startsWith('/static')
+}));
 
 app.use((req, res, next) => {
   if (req.method === "POST") {
@@ -73,11 +63,12 @@ app.use((req, res) => {
   res.status(404).send('Page Not Found');
 });
 
-// Error Handler Middleware
+// Error-handling middleware 
 app.use((err, req, res, next) => {
-  console.error('🔥 Unexpected Error:', err.stack);
+  console.error(`[ERROR] ${req.method} ${req.url} — ${err.stack}`);
   res.status(500).send('Something broke!');
 });
+
 
 app.listen(PORT, () => {
   console.log("Server is running on port 3000");
